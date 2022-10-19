@@ -6,6 +6,7 @@ TRY_LOOP="20"
 : "${AIRFLOW_HOME:="/usr/local/airflow"}"
 : "${AIRFLOW__CORE__FERNET_KEY:=${FERNET_KEY:=$(python -c "from cryptography.fernet import Fernet; FERNET_KEY = Fernet.generate_key().decode(); print(FERNET_KEY)")}}"
 : "${AIRFLOW__CORE__EXECUTOR:=${EXECUTOR:-Sequential}Executor}"
+: "${REQUIREMENTS_FILE:="dags/requirements.txt"}"
 
 # Load DAGs examples (default: Yes)
 if [[ -z "$AIRFLOW__CORE__LOAD_EXAMPLES" && "${LOAD_EX:=n}" == n ]]; then
@@ -21,9 +22,22 @@ export \
 # Install custom python package if requirements.txt is present
 install_requirements() {
     # Install custom python package if requirements.txt is present
-    if [[ -e "$AIRFLOW_HOME/dags/requirements.txt" ]]; then
+    if [[ -e "$AIRFLOW_HOME/$REQUIREMENTS_FILE" ]]; then
         echo "Installing requirements.txt"
-        pip3 install --user -r "$AIRFLOW_HOME/dags/requirements.txt"
+        pip3 install --user -r "$AIRFLOW_HOME/$REQUIREMENTS_FILE"
+    fi
+}
+
+# Download custom python WHL files and package as ZIP if requirements.txt is present
+package_requirements() {
+    # Download custom python WHL files and package as ZIP if requirements.txt is present
+    if [[ -e "$AIRFLOW_HOME/$REQUIREMENTS_FILE" ]]; then
+        echo "Packaging requirements.txt into plugins"
+        pip3 download -r "$AIRFLOW_HOME/$REQUIREMENTS_FILE" -d "$AIRFLOW_HOME/plugins"
+        cd "$AIRFLOW_HOME/plugins"
+        zip "$AIRFLOW_HOME/requirements/plugins.zip" *
+        printf '%s\n%s\n' "--no-index" "$(cat $AIRFLOW_HOME/$REQUIREMENTS_FILE)" > "$AIRFLOW_HOME/requirements/packaged_requirements.txt"
+        printf '%s\n%s\n' "--find-links /usr/local/airflow/plugins" "$(cat $AIRFLOW_HOME/requirements/packaged_requirements.txt)" > "$AIRFLOW_HOME/requirements/packaged_requirements.txt"
     fi
 }
 
