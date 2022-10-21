@@ -28,7 +28,6 @@ services:
         volumes:
             - "${PWD}/dags:/usr/local/airflow/dags"
             - "${PWD}/plugins:/usr/local/airflow/plugins"
-            - "${PWD}/requirements.txt:/usr/local/airflow/dags/requirements.txt"
             - type: bind
               source: ${PWD}/requirements.txt
               target: /usr/local/airflow/dags/requirements.txt

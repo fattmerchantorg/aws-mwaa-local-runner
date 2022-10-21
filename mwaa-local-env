@@ -2,6 +2,7 @@
 
 AIRFLOW_VERSION=2.0.2
 DOCKER_COMPOSE_PROJECT_NAME=aws-mwaa-local-runner-$AIRFLOW_VERSION
+: "${PATH_TO_DOCKER_DIR:="./docker"}"
 
 display_help() {
    # Display Help
@@ -51,7 +52,8 @@ validate_prereqs() {
 }
 
 build_image() {
-   docker build --rm --compress -t amazon/mwaa-local:$AIRFLOW_VERSION ./docker
+  echo $(pwd)
+  docker build --rm --compress -t amazon/mwaa-local:$AIRFLOW_VERSION $PATH_TO_DOCKER_DIR
 }
 
 case "$1" in
@@ -72,10 +74,10 @@ build-image)
    build_image
    ;;
 reset-db)
-   docker-compose -f ./docker/docker-compose-resetdb.yml up
+   docker-compose -f $PATH_TO_DOCKER_DIR/docker-compose-resetdb.yml up
    ;;
 start)
-   docker-compose -f ./docker/docker-compose-local.yml up
+   docker-compose -f $PATH_TO_DOCKER_DIR/docker-compose-local.yml up
    ;;
 help)
    display_help
